@@ -5,8 +5,7 @@
 
 ### Packages
 library(ggplot2)
-#install.packages("truncnorm")
-library(truncnorm)
+
 #install.packages("ANOVAreplication")
 library(ANOVAreplication)
 
@@ -71,7 +70,7 @@ IndDailyConsumptionAdM<- function()
 
 
 # Counts are from surveys conducted from 2010 through 2013. I only included surveys that
-# had all haulouts surveyed in that day. For a few surveys I pulled EBOD counts into a 
+# had all haulouts surveyed in that day. For a few surveys I pulled East Bodelteh counts into a 
 # day that otherwise had an incomplete count. Raw data for the counts are available from
 # Scordino and Akmajian 2021
 
@@ -94,12 +93,18 @@ IndDailyConsumptionAdM<- function()
 # by the findings of Whitlock et al. 2020 of very low attendance in May and by the end of August that
 # were similar to Olesiuk's estimate for winter CF. Overall the correction factors from
 # Olesiuk 2018 were similar to the estimates of Whitlock et al. 2020. These correction 
-# factors were for Steller sea lions.
+# factors were for Steller sea lions. Olesiuk found that 36% of non-pups (SD=2.1%) were hauled out in fall,
+# winter, and spring during the time window of 10:00 - 18:00 when our counts typically occurred.
+# During summer Olesiuk found that 67.4% of non-pups (SD= 5.6%) were hauled out during survey time periods.
+# Note that Olesiuk (2018) errored in reporting that 2.1% was the winter CV and 5.6% was the summer
+# CV of the proportion of population hauled out; both should have read SD instead of CV (Personal 
+# communication Peter Olesiuk, 2021).
 
 # The correction factor for winter, spring, and fall was informed by the forumula 
-# rnorm(1,2.778,0.0583)
+# (1/(rnorm(1,0.36,0.021)))
 # A separate correction factor was calculated for summer with the formula 
-# rnorm(1,1.48,0.0831)
+# (1/rnorm(1,0.674,0.056))
+
 
 # Count data from Scordino and Akmajian (2021) were used to determine the proportion of 
 # the hauled out Steller sea lions that were adult male, adult female, and juvenile.
@@ -115,29 +120,94 @@ IndDailyConsumptionAdM<- function()
 #Summer 	0.261	0.055	0.408	0.055	0.330	0.071 9
 #Winter 	0.390	0.104	0.406	0.046	0.205	0.074 4
 
-# The resultant formulas for males for each season were as follows:
-# EjMFall <- rtruncnorm(n=1,a=0,mean=0.207,sd=0.116)
-# EjMSpring <- rtruncnorm(n=1,a=0,mean=0.195,sd=0.071)
-# EjMSummer <- rtruncnorm(n=1,a=0,mean=0.330,sd=0.071)
-# EjMWinter <- rtruncnorm(n=1,a=0,mean=0.205,sd=0.074)
+# The proportions of individuals hauled out of each demographic group is best modeled using
+# a beta distribution. To calculate the beta distribution we first calculated the shape 1 and 
+# shape 2 of the distribution for each demographic group by season.
+
+# fall
+Mean_fall_j = 0.410
+sd_fall_j = 0.039
+Mean_fall_f = 0.383
+sd_fall_f = 0.110
+Mean_fall_m = 0.207
+sd_fall_m = 0.116
+
+Fall_j_shape1 <- (Mean_fall_j^2-Mean_fall_j^3-Mean_fall_j*sd_fall_j^2)/sd_fall_j^2
+Fall_j_shape2 <- (Mean_fall_j-2*Mean_fall_j^2+Mean_fall_j^3-sd_fall_j^2+Mean_fall_j*sd_fall_j^2)/sd_fall_j^2
+Fall_f_shape1 <- (Mean_fall_f^2-Mean_fall_f^3-Mean_fall_f*sd_fall_f^2)/sd_fall_f^2
+Fall_f_shape2 <- (Mean_fall_f-2*Mean_fall_f^2+Mean_fall_f^3-sd_fall_f^2+Mean_fall_f*sd_fall_f^2)/sd_fall_f^2
+Fall_m_shape1 <- (Mean_fall_m^2-Mean_fall_m^3-Mean_fall_m*sd_fall_m^2)/sd_fall_m^2
+Fall_m_shape2 <- (Mean_fall_m-2*Mean_fall_m^2+Mean_fall_m^3-sd_fall_m^2+Mean_fall_m*sd_fall_m^2)/sd_fall_m^2
+
+# spring
+Mean_spring_j = 0.426
+sd_spring_j = 0.098
+Mean_spring_f = 0.379
+sd_spring_f = 0.099
+Mean_spring_m = 0.195
+sd_spring_m = 0.071
+
+Spring_j_shape1 <- (Mean_spring_j^2-Mean_spring_j^3-Mean_spring_j*sd_spring_j^2)/sd_spring_j^2
+Spring_j_shape2 <- (Mean_spring_j-2*Mean_spring_j^2+Mean_spring_j^3-sd_spring_j^2+Mean_spring_j*sd_spring_j^2)/sd_spring_j^2
+Spring_f_shape1 <- (Mean_spring_f^2-Mean_spring_f^3-Mean_spring_f*sd_spring_f^2)/sd_spring_f^2
+Spring_f_shape2 <- (Mean_spring_f-2*Mean_spring_f^2+Mean_spring_f^3-sd_spring_f^2+Mean_spring_f*sd_spring_f^2)/sd_spring_f^2
+Spring_m_shape1 <- (Mean_spring_m^2-Mean_spring_m^3-Mean_spring_m*sd_spring_m^2)/sd_spring_m^2
+Spring_m_shape2 <- (Mean_spring_m-2*Mean_spring_m^2+Mean_spring_m^3-sd_spring_m^2+Mean_spring_m*sd_spring_m^2)/sd_spring_m^2
+
+# summer
+Mean_summer_j = 0.408
+sd_summer_j = 0.055
+Mean_summer_f = 0.261
+sd_summer_f = 0.055
+Mean_summer_m = 0.330
+sd_summer_m = 0.071
+
+Summer_j_shape1 <- (Mean_summer_j^2-Mean_summer_j^3-Mean_summer_j*sd_summer_j^2)/sd_summer_j^2
+Summer_j_shape2 <- (Mean_summer_j-2*Mean_summer_j^2+Mean_summer_j^3-sd_summer_j^2+Mean_summer_j*sd_summer_j^2)/sd_summer_j^2
+Summer_f_shape1 <- (Mean_summer_f^2-Mean_summer_f^3-Mean_summer_f*sd_summer_f^2)/sd_summer_f^2
+Summer_f_shape2 <- (Mean_summer_f-2*Mean_summer_f^2+Mean_summer_f^3-sd_summer_f^2+Mean_summer_f*sd_summer_f^2)/sd_summer_f^2
+Summer_m_shape1 <- (Mean_summer_m^2-Mean_summer_m^3-Mean_summer_m*sd_summer_m^2)/sd_summer_m^2
+Summer_m_shape2 <- (Mean_summer_m-2*Mean_summer_m^2+Mean_summer_m^3-sd_summer_m^2+Mean_summer_m*sd_summer_m^2)/sd_summer_m^2
+
+# winter
+Mean_winter_j = 0.406
+sd_winter_j = 0.046
+Mean_winter_f = 0.390
+sd_winter_f = 0.104
+Mean_winter_m = 0.205
+sd_winter_m = 0.074
+
+Winter_j_shape1 <- (Mean_winter_j^2-Mean_winter_j^3-Mean_winter_j*sd_winter_j^2)/sd_winter_j^2
+Winter_j_shape2 <- (Mean_winter_j-2*Mean_winter_j^2+Mean_winter_j^3-sd_winter_j^2+Mean_winter_j*sd_winter_j^2)/sd_winter_j^2
+Winter_f_shape1 <- (Mean_winter_f^2-Mean_winter_f^3-Mean_winter_f*sd_winter_f^2)/sd_winter_f^2
+Winter_f_shape2 <- (Mean_winter_f-2*Mean_winter_f^2+Mean_winter_f^3-sd_winter_f^2+Mean_winter_f*sd_winter_f^2)/sd_winter_f^2
+Winter_m_shape1 <- (Mean_winter_m^2-Mean_winter_m^3-Mean_winter_m*sd_winter_m^2)/sd_winter_m^2
+Winter_m_shape2 <- (Mean_winter_m-2*Mean_winter_m^2+Mean_winter_m^3-sd_winter_m^2+Mean_winter_m*sd_winter_m^2)/sd_winter_m^2
+
+
+#Resultant formulas for males for each season were as follows:
+# Fall <- rbeta(n=1,shape1=Fall_m_shape1,shape2=Fall_m_shape2)
+# Spring <- rbeta(n=1,shape1=Spring_m_shape1,shape2=Spring_m_shape2)
+# Summer <- rbeta(n=1,shape1=Summer_m_shape1,shape2=Summer_m_shape2)
+# Winter <- rbeta(n=1,shape1=Winter_m_shape1,shape2=Winter_m_shape2)
 
 # The resultant formulas for juveniles for each season were as follows:
-#EjJFall <- rtruncnorm(n=1,a=0,mean=0.410,sd=0.039)
-#EjJSpring <- rtruncnorm(n=1,a=0,mean=0.426,sd=0.098)
-#EjJSummer <- rtruncnorm(n=1,a=0,mean=0.408,sd=0.055)
-#EjJWinter <- rtruncnorm(n=1,a=0,mean=0.406,sd=0.046)
+# Fall <- rbeta(n=1,shape1=Fall_j_shape1,shape2=Fall_j_shape2)
+# Spring <- rbeta(n=1,shape1=Spring_j_shape1,shape2=Spring_j_shape2)
+# Summer <- rbeta(n=1,shape1=Summer_j_shape1,shape2=Summer_j_shape2)
+# Winter <- rbeta(n=1,shape1=Winter_j_shape1,shape2=Winter_j_shape2)
 
 # The resultant formulas for females for each season were as follows:
-# EjFFall <- rtruncnorm (n=1,a=0, mean=0.383,sd=0.110)
-# EjFSpring <- rtruncnorm(n=1,a=0,mean=0.379,sd=0.099)
-# EjFSummer <- rtruncnorm(n=1,a=0,mean=0.261,sd=0.055)
-# EjFWinter <- rtruncnorm(n=1,a=0,mean=0.390,sd=0.104)
+# Fall <- rbeta(n=1,shape1=Fall_f_shape1,shape2=Fall_f_shape2)
+# Spring <- rbeta(n=1,shape1=Spring_f_shape1,shape2=Spring_f_shape2)
+# Summer <- rbeta(n=1,shape1=Summer_f_shape1,shape2=Summer_f_shape2)
+# Winter <- rbeta(n=1,shape1=Winter_f_shape1,shape2=Winter_f_shape2)
 
 
-# The formula for abundance of non-pups in fall was rtruncnorm(n=1, a=0, mean=825.11, sd=363.96)
-# The formula for abundance of non-pups in spring was rtruncnorm(n=1, a=0, mean=644.69, sd=157.96)
-# The formula for abundance of non-pups in summer was rtruncnorm(n=1, a=0, mean=744.47, sd=96.62)
-# The formula for abundance of non-pups in winter was rtruncnorm(n=1, a=0, mean=539.00, sd=124.81)
+# The formula for abundance of non-pups in fall was rnbinom(n=1,mu=825.11,size=6.38)
+# The formula for abundance of non-pups in spring was rnbinom(n=1, mu=644.69, size=18.87)
+# The formula for abundance of non-pups in summer was rnbinom(n=1, mu=744.47, size=68.93)
+# The formula for abundance of non-pups in winter was rnbinom(n=1, mu=539.00, size=24.27)
 
 # The final formula to calculate consumption for each season was split into four parts: 
 # juvenile female, juvenile male, adult female, and adult male.
@@ -146,25 +216,25 @@ IndDailyConsumptionAdM<- function()
 # *the estimate of daily consumption of the demographic group). For juveniles an added factor
 # multiplied by the estimated proportion of juveniles for each sex, respectively.
 
-EjFall <-(replicate(n=10000, (rnbinom(n=1,mu=825.11,size=6.38)*rtruncnorm(n=1,a=0,mean=0.410,sd=0.039)*0.544*(1/1000)*(30+31+30)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvF())))+
-  (replicate(n=10000, (rnbinom(n=1,mu=825.11,size=6.38)*rtruncnorm(n=1,a=0,mean=0.410,sd=0.039)*0.456*(1/1000)*(30+31+30)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvM())))+
-  (replicate(n=10000, (rnbinom(n=1,mu=825.11,size=6.38)*rtruncnorm (n=1,a=0, mean=0.383,sd=0.110)*(1/1000)*(30+31+30)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdF())))+
-  (replicate(n=10000, (rnbinom(n=1,mu=825.11,size=6.38)*rtruncnorm(n=1,a=0,mean=0.207,sd=0.116)*(1/1000)*(30+31+30)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdM())))
+EjFall <-(replicate(n=10000, (rnbinom(n=1,mu=825.11,size=6.38)*rbeta(n=1,shape1=Fall_j_shape1,shape2=Fall_j_shape2)*0.544*(1/1000)*(30+31+30)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionJuvF())))+
+  (replicate(n=10000, (rnbinom(n=1,mu=825.11,size=6.38)*rbeta(n=1,shape1=Fall_j_shape1,shape2=Fall_j_shape2)*0.456*(1/1000)*(30+31+30)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionJuvM())))+
+  (replicate(n=10000, (rnbinom(n=1,mu=825.11,size=6.38)*rbeta(n=1,shape1=Fall_f_shape1,shape2=Fall_f_shape2)*(1/1000)*(30+31+30)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionAdF())))+
+  (replicate(n=10000, (rnbinom(n=1,mu=825.11,size=6.38)*rbeta(n=1,shape1=Fall_m_shape1,shape2=Fall_m_shape2)*(1/1000)*(30+31+30)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionAdM())))
 
-EjWinter <-(replicate(n=10000, (rnbinom(n=1, mu=539.00, size=24.27)*rtruncnorm(n=1,a=0,mean=0.406,sd=0.046)*0.544*(1/1000)*(31+31+28)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvF()))+
-  (replicate(n=10000, rnbinom(n=1, mu=539.00, size=24.27)*rtruncnorm(n=1,a=0,mean=0.406,sd=0.046)*0.456*(1/1000)*(31+31+28)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvM()))+
-  (replicate(n=10000, rnbinom(n=1, mu=539.00, size=24.27)*rtruncnorm(n=1,a=0,mean=0.390,sd=0.104)*(1/1000)*(31+31+28)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdF()))+
-  (replicate(n=10000, rnbinom(n=1, mu=539.00, size=24.27)*rtruncnorm(n=1,a=0,mean=0.205,sd=0.074)*(1/1000)*(31+31+28)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdM())))
+EjWinter <-(replicate(n=10000, (rnbinom(n=1, mu=539.00, size=24.27)*rbeta(n=1,shape1=Winter_j_shape1,shape2=Winter_j_shape2)*0.544*(1/1000)*(31+31+28)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionJuvF()))+
+  (replicate(n=10000, rnbinom(n=1, mu=539.00, size=24.27)*rbeta(n=1,shape1=Winter_j_shape1,shape2=Winter_j_shape2)*0.456*(1/1000)*(31+31+28)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionJuvM()))+
+  (replicate(n=10000, rnbinom(n=1, mu=539.00, size=24.27)*rbeta(n=1,shape1=Winter_f_shape1,shape2=Winter_f_shape2)*(1/1000)*(31+31+28)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionAdF()))+
+  (replicate(n=10000, rnbinom(n=1, mu=539.00, size=24.27)*rbeta(n=1,shape1=Winter_m_shape1,shape2=Winter_m_shape2)*(1/1000)*(31+31+28)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionAdM())))
 
-EjSpring <-(replicate(n=10000, (rnbinom(n=1, mu=644.69, size=18.87)*rtruncnorm(n=1,a=0,mean=0.426,sd=0.098)*0.544*(1/1000)*(31+30+31)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvF()))+
-  (replicate(n=10000, rnbinom(n=1, mu=644.69, size=18.87)*rtruncnorm(n=1,a=0,mean=0.426,sd=0.098)*0.456*(1/1000)*(31+30+31)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvM()))+
-  (replicate(n=10000, rnbinom(n=1, mu=644.69, size=18.87)*rtruncnorm(n=1,a=0,mean=0.379,sd=0.099)*(1/1000)*(31+30+31)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdF()))+
-  (replicate(n=10000, rnbinom(n=1, mu=644.69, size=18.87)*rtruncnorm(n=1,a=0,mean=0.195,sd=0.071)*(1/1000)*(31+30+31)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdM())))
+EjSpring <-(replicate(n=10000, (rnbinom(n=1, mu=644.69, size=18.87)*rbeta(n=1,shape1=Spring_j_shape1,shape2=Spring_j_shape2)*0.544*(1/1000)*(31+30+31)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionJuvF()))+
+  (replicate(n=10000, rnbinom(n=1, mu=644.69, size=18.87)*rbeta(n=1,shape1=Spring_j_shape1,shape2=Spring_j_shape2)*0.456*(1/1000)*(31+30+31)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionJuvM()))+
+  (replicate(n=10000, rnbinom(n=1, mu=644.69, size=18.87)*rbeta(n=1,shape1=Spring_f_shape1,shape2=Spring_f_shape2)*(1/1000)*(31+30+31)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionAdF()))+
+  (replicate(n=10000, rnbinom(n=1, mu=644.69, size=18.87)*rbeta(n=1,shape1=Spring_m_shape1,shape2=Spring_m_shape2)*(1/1000)*(31+30+31)*(1/(rnorm(1,0.36,0.021)))*IndDailyConsumptionAdM())))
 
-EjSummer <-(replicate(n=10000, (rnbinom(n=1, mu=744.47, size=68.93)*rtruncnorm(n=1,a=0,mean=0.408,sd=0.055)*0.544*(1/1000)*(31+31+30)*rnorm(1,1.48,0.0831)*IndDailyConsumptionJuvF()))+
-  (replicate(n=10000, rnbinom(n=1, mu=744.47, size=68.93)*rtruncnorm(n=1,a=0,mean=0.408,sd=0.055)*0.456*(1/1000)*(31+31+30)*rnorm(1,1.48,0.0831)*IndDailyConsumptionJuvM()))+
-  (replicate(n=10000, rnbinom(n=1, mu=744.47, size=68.93)*rtruncnorm(n=1,a=0,mean=0.261,sd=0.055)*(1/1000)*(31+31+30)*rnorm(1,1.48,0.0831)*IndDailyConsumptionAdF()))+
-  (replicate(n=10000, rnbinom(n=1, mu=744.47, size=68.93)*rtruncnorm(n=1,a=0,mean=0.330,sd=0.071)*(1/1000)*(31+31+30)*rnorm(1,1.48,0.0831)*IndDailyConsumptionAdM())))
+EjSummer <-(replicate(n=10000, (rnbinom(n=1, mu=744.47, size=68.93)*rbeta(n=1,shape1=Summer_j_shape1,shape2=Summer_j_shape2)*0.544*(1/1000)*(31+31+30)*(1/rnorm(1,0.674,0.056))*IndDailyConsumptionJuvF()))+
+  (replicate(n=10000, rnbinom(n=1, mu=744.47, size=68.93)*rbeta(n=1,shape1=Summer_j_shape1,shape2=Summer_j_shape2)*0.456*(1/1000)*(31+31+30)*(1/rnorm(1,0.674,0.056))*IndDailyConsumptionJuvM()))+
+  (replicate(n=10000, rnbinom(n=1, mu=744.47, size=68.93)*rbeta(n=1,shape1=Summer_f_shape1,shape2=Summer_f_shape2)*(1/1000)*(31+31+30)*(1/rnorm(1,0.674,0.056))*IndDailyConsumptionAdF()))+
+  (replicate(n=10000, rnbinom(n=1, mu=744.47, size=68.93)*rbeta(n=1,shape1=Summer_m_shape1,shape2=Summer_m_shape2)*(1/1000)*(31+31+30)*(1/rnorm(1,0.674,0.056))*IndDailyConsumptionAdM())))
 
 EjFallMean <-mean(EjFall)
 EjFallSd <- sd(EjFall)
@@ -178,26 +248,8 @@ EjSpringSd <- sd(EjSpring)
 EjSummerMean <- mean(EjSummer)
 EjSummerSd <- sd(EjSummer)
 
-EjFullYear  <-((replicate(n=10000,  (rnbinom(n=1, mu=825.11, size=6.38)*rtruncnorm(n=1,a=0,mean=0.410,sd=0.039)*0.544*(1/1000)*(30+31+30)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvF())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=825.11, size=6.38)*rtruncnorm(n=1,a=0,mean=0.410,sd=0.039)*0.456*(1/1000)*(30+31+30)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvM())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=825.11, size=6.38)*rtruncnorm (n=1,a=0, mean=0.383,sd=0.110)*(1/1000)*(30+31+30)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdF())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=825.11, size=6.38)*rtruncnorm(n=1,a=0,mean=0.207,sd=0.116)*(1/1000)*(30+31+30)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdM())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=539.00, size=24.27)*rtruncnorm(n=1,a=0,mean=0.406,sd=0.046)*0.544*(1/1000)*(31+31+28)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvF())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=539.00, size=24.27)*rtruncnorm(n=1,a=0,mean=0.406,sd=0.046)*0.456*(1/1000)*(31+31+28)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvM())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=539.00, size=24.27)*rtruncnorm(n=1,a=0,mean=0.390,sd=0.104)*(1/1000)*(31+31+28)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdF())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=539.00, size=24.27)*rtruncnorm(n=1,a=0,mean=0.205,sd=0.074)*(1/1000)*(31+31+28)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdM())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=644.69, size=18.87)*rtruncnorm(n=1,a=0,mean=0.426,sd=0.098)*0.544*(1/1000)*(31+30+31)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvF())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=644.69, size=18.87)*rtruncnorm(n=1,a=0,mean=0.426,sd=0.098)*0.456*(1/1000)*(31+30+31)*rnorm(1,2.778,0.0583)*IndDailyConsumptionJuvM())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=644.69, size=18.87)*rtruncnorm(n=1,a=0,mean=0.379,sd=0.099)*(1/1000)*(31+30+31)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdF())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=644.69, size=18.87)*rtruncnorm(n=1,a=0,mean=0.195,sd=0.071)*(1/1000)*(31+30+31)*rnorm(1,2.778,0.0583)*IndDailyConsumptionAdM())))+   
-                 (replicate(n=10000, (rnbinom(n=1, mu=744.47, size=68.93)*rtruncnorm(n=1,a=0,mean=0.408,sd=0.055)*0.544*(1/1000)*(31+31+30)*rnorm(1,1.48,0.0831)*IndDailyConsumptionJuvF())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=744.47, size=68.93)*rtruncnorm(n=1,a=0,mean=0.408,sd=0.055)*0.456*(1/1000)*(31+31+30)*rnorm(1,1.48,0.0831)*IndDailyConsumptionJuvM())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=744.47, size=68.93)*rtruncnorm(n=1,a=0,mean=0.261,sd=0.055)*(1/1000)*(31+31+30)*rnorm(1,1.48,0.0831)*IndDailyConsumptionAdF())))+
-                 (replicate(n=10000, (rnbinom(n=1, mu=744.47, size=68.93)*rtruncnorm(n=1,a=0,mean=0.330,sd=0.071)*(1/1000)*(31+31+30)*rnorm(1,1.48,0.0831)*IndDailyConsumptionAdM()))))
- 
-EjFullYearMean <- mean(EjFullYear)
-EjFullYearSd <- sd(EjFullYear)
-
+EjAllSeasonsMean <- EjFallMean+EjSpringMean+EjSummerMean+EjWinterMean
+EjAllSeasonsSD <- sqrt(EjFallSd^2+EjSpringSd^2+EjSummerSd^2+EjWinterSd^2)
 
 ########################### California sea lion Estimator #########
 # correction factor from Lowry and Forney 2005 for the portion of the California sea lion
@@ -235,7 +287,7 @@ IndDailyConsumption<- function()
 }
 
 # Count data is provided in Scordino and Akamajian 2021. Summarized count results are below
-# with their negative binomial distribution size.
+# with their negative binomial distribution mean and size.
 #        Mean	      size            
 #Fall	  1573.615385	3.13   
 #Spring	419.3333333	4.09   
@@ -248,13 +300,20 @@ SpringStudy <-replicate(n=10000, rnbinom(1,size=4.09,mu=419.33)*(1/1000)*(31+30+
 SummerStudy <-replicate(n=10000, rnbinom(1,size = 0.61, mu=349.30)*(1/1000)*(31+31+30)*runif(1,1.77,2.13)*IndDailyConsumption())
 WinterStudy <-replicate(n=10000, rnbinom(1,size=4.86, mu=153.25)*(1/1000)*(28+31+31)*runif(1,1.77,2.13)*IndDailyConsumption())
 
-ZcFullYear <-(replicate(n=10000, rnbinom(1,size=3.13,mu=1573.62)*(1/1000)*(30+31+30)*runif(1,1.77,2.13)*IndDailyConsumption()))+
-  (replicate(n=10000, rnbinom(1,size=4.09,mu=419.33)*(1/1000)*(31+30+31)*runif(1,1.77,2.13)*IndDailyConsumption()))+ 
-  (replicate(n=10000, rnbinom(1,size = 0.61, mu=349.30)*(1/1000)*(31+31+30)*runif(1,1.77,2.13)*IndDailyConsumption()))+
-  (replicate(n=10000, rnbinom(1,size=4.86, mu=153.25)*(1/1000)*(28+31+31)*runif(1,1.77,2.13)*IndDailyConsumption()))
+ZcFall <-mean(FallStudy)
+ZcFallSD <- sd(FallStudy)
 
-ZcFullYearMean <- mean(ZcFullYear)
-ZcFullYearSd <- sd(ZcFullYear)
+ZcSpring = mean(SpringStudy)
+ZcSpringSD = sd(SpringStudy)
+
+ZcSummer = mean(SummerStudy)
+ZcSummerSD = sd(SummerStudy)
+
+ZcWinter = mean(WinterStudy)
+ZcWinterSD = sd(WinterStudy)
+
+ZcFullYearMean <- mean(FallStudy+SpringStudy+SummerStudy+WinterStudy)
+ZcFullYearSd <- sqrt(var(FallStudy)+var(SpringStudy)+var(SummerStudy)+var(WinterStudy))
 
 
 ##Figure 3 from Scordino et al. (in submission)#######################
@@ -293,7 +352,7 @@ legend(9.3,11000,c("Steller sea lions","California sea lions"),pch=c(22,22), pt.
 
 # Lowry, M. S., and K. A. Forney. 2005. Abundance and distribution of California sea
 # lions (Zalophus californianus) in central and northern California during 1998 and 
-# summer 1999. Fish. Bull. 103:331-343.
+# summer 1999. Fish. Bull. 103:331–343.
 
 # Olesiuk, P. F. 2018. Recent trends in Abundance of Steller Sea Lions (Eumetopias 
 # jubatus) in British Columbia. Dep. Fish Ocean. Can. Sci. Advis. Secr. Res. Doc., 
@@ -311,21 +370,21 @@ legend(9.3,11000,c("Steller sea lions","California sea lions"),pch=c(22,22), pt.
 # Ecol. Modell. 420:108965. https://doi.org/10.1016/j.ecolmodel.2020.108965.
 
 # Winship, A. J., A. W. Trites, and D. G. Calkins. 2001. Growth in body size of the 
-# Steller sea lion (Eumetopias jubatus). J. Mammal. 82:500-519. 
+# Steller sea lion (Eumetopias jubatus). J. Mammal. 82:500–519. 
 # https://doi.org/10.1644/1545-1542(2001)082<0500:gibsot>2.0.co;2.
 
 # Winship, A. J., A. M. J. Hunter, D. A. S. Rosen, and A. W. Trites. 2006. Food 
 # consumption by sea lions: Existing data and techniques. In Sea lions of the world 
 # (A.W. Trites, S. K. Atkinson, D. P DeMaster, L. W. Fritz, T. S. Gelatt, L. D. Rea, 
-# and K. M. Wynne, eds.), p. 177-191. Alaska Sea Grant College Program, University of 
+# and K. M. Wynne, eds.), p. 177–191. Alaska Sea Grant College Program, University of 
 # Alaskka Fairbanks. https://doi.org/10.4027/slw.2006.13.
 
 # Wright, B. E., M. J. Tennis, and R. F. Brown. 2010. Movements of male California sea 
-# lions captured in the Columbia River. Northwest Sci. 84:60-72. 
+# lions captured in the Columbia River. Northwest Sci. 84:60–72. 
 # https://doi.org/10.3955/046.084.0107.
 
 # Wright, B. E., R. F. Brown, R. L. DeLong, P. J. Gearin, S. D. Riemer, J. L. Laake, 
 # and J. J. Scordino. 2017. Survival rates of Steller sea lions from Oregon and 
-# California. J. Mammal. 98:885-894. https://doi.org/10.1093/jmammal/gyx033.
+# California. J. Mammal. 98:885–894. https://doi.org/10.1093/jmammal/gyx033.
 
 
